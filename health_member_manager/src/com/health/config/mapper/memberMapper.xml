@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="member">
+
+	<sql id="select-sql">
+		select member_no memberNo, member_name memberName, member_phoneend phoneEnd,
+		member_startDay startDay, member_endDay endDay, shooes_no
+		shoesNo,member_phonemiddle phoneMiddle,
+		member_codePhoneFront phoneFront, member_birthDay birthday, member_address address,
+		member_email email
+		from Health_Member
+	</sql>
+
+	<insert id="insertMember" parameterType="HealthMember">
+		insert into Health_Member values
+		(#{memberNo},#{shoesNo},#{memberName},#{phoneMiddle},#{phoneEnd},#{startDay},#{endDay},
+		#{birthday},#{address},#{email},#{phoneFront})
+	</insert>
+	
+	<insert id="shoesCageMember" parameterType="ShoesCage">
+	
+	insert into health_shoes values(#{shoesNo},#{memberNo},#{startDay},#{endDay})
+	
+	</insert>
+
+	<!-- 공통 -->
+	<update id="updateMemberById" parameterType="HealthMember">
+		update Health_Member
+		set member_name = #{memberName},
+		member_phoneend = #{phoneEnd},
+		member_startDay = #{startDay},
+		member_endDay =#{endDay},
+		shooes_no = #{shoesNo},
+		member_phonemiddle =#{phoneMiddle},
+		member_codePhoneFront=#{phoneFront},
+		member_birthDay=#{birthday},
+		member_address=#{address},
+		member_email=#{email}
+		where member_no = #{memberNo}
+	</update>
+
+	<delete id="deleteByAttend" parameterType="hashmap">
+		delete from ATTENDANCE
+		<where>
+			<if test="id !=null">
+				member_no=#{id}
+			</if>
+			<choose>
+				<when test="attendanceDates != null and attendanceDates.size() !=0">
+					and attendance_date in
+					<foreach collection="attendanceDates" item="date" open="("
+						close=")" separator=",">
+						#{date}
+					</foreach>
+				</when>
+				<otherwise>
+					1!=1
+				</otherwise>
+			</choose>
+		</where>
+	</delete>
+
+	<delete id="deleteByMemberNo" parameterType="list">
+		delete from health_member
+		<where>
+			<choose>
+				<when test="list != null and list.size() != 0">
+					member_no in
+					<foreach collection="list" item="memberNo" open="(" close=")"
+						separator=",">
+						#{memberNo}
+					</foreach>
+				</when>
+				<otherwise>
+					1 != 1
+				</otherwise>
+			</choose>
+		</where>
+	</delete>
+	
+	<delete id="deleteByMemberNoForView" parameterType="_int">
+		delete from health_shoes where member_no=#{memberNo}
+	</delete>
+	
+	<update id="shoesNoValueZero" parameterType="_int">
+		update health_member set shooes_no=0 where member_No=#{memberNo}
+	</update>
+
+
+
+
+
+	<!-- 조회 -->
+	<!-- No로 조회 -->
+	<select id="selectMemberById" parameterType="_int" resultType="HealthMember">
+		<include refid="select-sql" />
+		where member_no = #{memberNo}
+	</select>
+
+<!-- 이름로 조회 페이징 한건인데 없앨예정 -->
+	<select id="selectMemberByNamePaging" parameterType="hashmap" resultType="HealthMember">
+	   select member_no memberNo, shooes_no shoesNo, member_name memberName, member_phoneend phoneEnd, 
+	  member_startDay startDay,member_endDay endDay
+      from  (select ceil(rownum/#{memberPerpageAmout}) page, member_no, shooes_no, member_name, member_phoneend, member_startDay,member_endDay
+               from(select member_no, shooes_no, member_name, member_phoneend, member_startDay,member_endDay
+                       from health_member where member_name like '%'||#{memberName}||'%'
+                       order by member_startDay desc
+                      )
+               )
+      where page = #{anyPage}
+	</select>
+	
+	
+	<!--이름으로 조회  -->
+	<select id="selectMemberByName" parameterType="string" resultType="HealthMember">
+	<include refid="select-sql"/>
+	where member_name like '%'||#{memberName}||'%'
+	</select>
+
+	<!-- 만료된 회원 조회 -->
+	<select id="endDateMember" resultType="HealthMember" parameterType="hashmap">
+				  select member_no memberNo, shooes_no shoesNo, member_name memberName, member_phoneend phoneEnd, 
+	  member_startDay startDay,member_endDay endDay
+      from  (select ceil(rownum/#{memberPerpageAmout}) page, member_no, shooes_no, member_name, member_phoneend, member_startDay,member_endDay
+               from(select member_no, shooes_no, member_name, member_phoneend, member_startDay,member_endDay
+                       from health_member where member_endDay &lt; sysdate order by member_startDay desc
+                      )
+               )
+      where page = #{anyPage}
+	</select>
+	
+	
+	<select id="endDateMemberCount" resultType="_int">
+	select  count(*)  from health_member where member_endDay &lt; sysdate
+	</select>
+	
+	
+	
+	
+
+	<!-- 회원 전체 조회 -->
+	<select id="selectMemberList" resultType="HealthMember">
+		<include refid="select-sql" />
+		order by member_startDay desc
+	</select>
+	
+	<!-- 회원가입 시 회원번호 검증을 위한 no값 조회  -->
+	<select id="memberNoCheck" resultType="_int">
+	select member_no memberNo from health_member
+	</select>
+	
+	<!--코드테이블 조회 -->
+	<select id="selectCodePhoneNumber" resultType="CodeTable">
+		select codevalue from CODETABLE where codeoption='phoneNum'
+	</select>
+
+	<!-- 신발장 조회 -->
+	<select id="ShoesCagebyNo" parameterType="_int" resultType="ShoesCage">
+		select shooes_no shoesNo,member_no memberNo,shooes_startDay
+		startDay,shooes_endDay endDay from health_shoes
+		where member_no=#{value}
+	</select>
+
+	<!-- 출석insert -->
+	<insert id="attendInsertbyNo" parameterType="Attendance">
+		insert into attendance values(#{memberNo},#{memberName},#{attendanceDate})
+	</insert>
+
+	<!-- 하나의 회원 출석 select -->
+	<select id="oneMemberAttendList" resultType="Attendance">
+		select member_no memberNo, member_name memberName, attendance_date
+		attendanceDate from ATTENDANCE
+		where member_no=#{memberNo} order by attendance_date desc
+	</select>
+
+	<select id="oneMemberAttendCount" resultType="_int">
+		select count(*)
+		from ATTENDANCE
+		where member_no=#{memberNo}
+	</select>
+	
+	<select id="selectMemberListPaging" resultType="HealthMember" parameterType="hashmap">
+		  select member_no memberNo, shooes_no shoesNo, member_name memberName, member_phoneend phoneEnd, 
+	  member_startDay startDay,member_endDay endDay
+      from  (select ceil(rownum/#{memberPerpageAmout}) page, member_no, shooes_no, member_name, member_phoneend, member_startDay,member_endDay
+               from(select member_no, shooes_no, member_name, member_phoneend, member_startDay,member_endDay
+                       from health_member order by member_startDay desc
+                      )
+               )
+      where page = #{anyPage}
+	
+	</select>
+	
+	 <select id="selectCountMember" resultType="_int">
+      select count(member_no) from Health_member
+   </select>
+   
+   <!-- manager 의 정보를 가져옴  -->
+   <select id="managerSearchIdPw" resultType="ManagerInfo">
+   select manager_id managerId, manager_pw managerPw, serial_num serialNum, manager_email managerEmail from Manager
+    
+   </select>
+	
+	<update id="updateShooesNoForList" parameterType="hashmap">
+	update health_member set shooes_no =#{shoesNo} where member_no=#{memberNo}
+	</update>
+	
+	
+	<!-- 이용중인 신발장의 번호조회  -->
+	<select id="usingShooseNo" resultType="_int">
+	select shooes_no  from health_shoes where shooes_no is not null
+	</select>
+	
+	<select id="endedShoeNo" resultType="ShoesCage">
+	select shooes_no shoesNo, member_no memberNo, shooes_startDay startDay, shooes_endDay endDay
+	from health_shoes
+	where shooes_endDay &lt; sysdate
+	</select>
+	
+
+</mapper>

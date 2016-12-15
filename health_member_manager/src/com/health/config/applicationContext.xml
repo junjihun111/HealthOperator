@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+	<!--  
+		spring-mybatis 연동 의존관계
+		
+		BasicDataSource(been)		-주입 -> SqlSessionFactoryBean	-주입->SqlSessionTemplate -주입->MemberDaoImpl-주입->MemberServiceImpl
+		mybatis 전역설정파일
+	-->
+
+	<!-- BasicDataSource 빈으로 등록 -->
+	
+	<bean name="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" 
+				p:driverClassName="oracle.jdbc.driver.OracleDriver"
+				p:url="jdbc:oracle:thin:@127.0.0.1:1521:XE"
+				p:username="scott"
+				p:password="tiger"
+				p:maxTotal="100"/>
+				
+	<!--
+		SqlSessionFactoryBean 빈으로 등록 : 역활 - SqlSessionFactoryBuilder + SqlSessionFactory
+				DataSource, mybatis 전역설정 파일 위치를 주입
+	  -->
+	<bean name="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
+			p:dataSource-ref="dataSource"
+			p:configLocation="classpath:com/health/config/mybatis-config.xml"/>
+	
+	<!-- 
+		SqlSessionTemplate 빈으로 등록 : 역활 - SqlSession 의 기능을 제공하는 클래스
+		SqlSessionFactoryBean을 주입 (생성자를 통해 주입)
+	 -->
+	
+	<bean name="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate" c:sqlSessionFactory-ref="sqlSessionFactory"/>
+
+	<!-- MemberDaoImpl 빈으로 등록  -->
+	<context:component-scan base-package="com.health.member.dao,com.health.member.service"/>
+</beans>

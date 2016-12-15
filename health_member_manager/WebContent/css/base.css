@@ -1,0 +1,41 @@
+table {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: center;
+	font-family: 'Trebuchet MS';
+}
+
+td, th {
+	text-align: center;
+	font-size: 10pt;
+	border: 1px solid #231EB7;
+	height: 30px;
+	padding: 5px;
+}
+
+th {
+	background-color: #5B5AFF;
+	color: #ffffff;
+	font-family: Georgia;
+}
+
+div#dialog {
+	width: 400px;
+	display: none;
+}
+
+article {
+	border-bottom: 1px solid black;
+	padding: 5px;
+	padding-left: 10px;
+}
+
+#listTbody tr td:nth-child(2) {
+	cursor: pointer;
+}
+
+.errorspans {
+font-weight:bold;
+color:red;
+font-size:12px;
+}
